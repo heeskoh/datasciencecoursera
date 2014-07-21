@@ -1,0 +1,141 @@
+PA1_template.Rmd by Maria Koh
+========================================
+This is my first R markdown file
+
+```{r, echo=FALSE}
+  library(knitr)
+  library(ggplot2)
+```
+
+What is mean total number of steps taken per day?
+For this part of the assignment, you can ignore the missing values in the dataset.
+Make a histogram of the total number of steps taken each day
+
+```{r}
+  activitydata00 <- read.csv("data/activity.csv", colClasses = "character")
+	activitydata00$steps <- as.integer(activitydata00$steps)
+	activitydata00$interval <- as.integer(activitydata00$interval)
+	activitydata00$date <- as.Date(activitydata00$date,"%Y-%m-%d" )
+	activitydata <- subset(activitydata00, activitydata00$steps != "NA")
+	activitydata$steps <- as.integer(activitydata$steps)
+	activitydata$interval <- as.integer(activitydata$interval)
+	activitydata$date <- as.Date(activitydata$date,"%Y-%m-%d" )
+```
+
+You can see my plot for the total number of steps taken per day
+
+```{r, echo=FALSE}
+  qplot(unique(activitydata$date), tapply(activitydata$steps, activitydata$date, sum),  geom="bar",stat="identity", fill="blue")
+```
+
+Calculate and report the mean and median total number of steps taken per day
+
+```{r}
+  avtivityReport <- data.frame(ActDate=unique(activitydata$date))
+	avtivityReport <- cbind(avtivityReport, StepSum = tapply(activitydata$steps, activitydata$date, sum))
+	mean(avtivityReport$StepSum)
+	median(avtivityReport$StepSum)
+```
+
+What is the average daily activity pattern?
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis{)}
+
+```{r}
+  activitydata00  <- cbind(activitydata00 , timeOfDay = sprintf("%04d", activitydata00$interval))
+	PatternOfDay<- data.frame(timeOfDay = as.character(unique(activitydata00$timeOfDay)))
+  PatternOfDay<- cbind(PatternOfDay, stepMean=  tapply(activitydata00$steps, activitydata00$timeOfDay, mean, na.rm=TRUE))
+	PatternOfDay<- cbind(PatternOfDay, stepMedian=  tapply(activitydata00$steps, activitydata00$timeOfDay, median, na.rm=TRUE))
+	PatternOfDay<- cbind( PatternOfDay, stepMax= tapply(activitydata00$steps, activitydata00$timeOfDay, max, na.rm=TRUE) )
+```
+
+You can see my plot for the mean value for total number of steps taken per day
+
+```{r, echo=FALSE}
+   ggplot() +  geom_line(aes(x =strptime(PatternOfDay$timeOfDay,"%H%M"),  y =  PatternOfDay$stepMean  ), colour = 'blue', size = 1) 
+```
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+  PatternOfDay$timeOfDay[which.max (PatternOfDay$stepMax)]
+```
+Imputing missing values
+Note that there are a number of days/intervals where there are missing values (coded as NA). 
+The presence of missing days may introduce bias into some calculations or summaries of the data.
+Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs{)}
+
+Devise a strategy for filling in all of the missing values in the dataset. 
+The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+Create a new dataset that is equal to the original dataset but with the missing data filled in.
+I decide to fill in the median for that 5-minute interval for missing values
+  
+
+```{r}
+  activitydata01 <- activitydata00
+	numdates <-  length(unique(activitydata01$date))
+	activitydata01<- cbind( activitydata01, stepMedian = rep(PatternOfDay$stepMedian, numdates))
+	naindex <- which( is.na(activitydata01$steps) == TRUE) 
+	activitydata01[naindex,1] <- activitydata01[naindex,5]
+```
+
+Make a histogram of the total number of steps taken each day and 
+
+```{r,echo=FALSE}
+  qplot(unique(activitydata01$date), tapply(activitydata01$steps, activitydata01$date, sum),  geom="bar", stat="identity", fill="blue")
+
+```
+
+Calculate and report the mean and median total number of steps taken per day. 
+
+```{r}
+	avtivityReport01 <- data.frame(ActDate=unique(activitydata01$date))
+	avtivityReport01 <- cbind(avtivityReport01, StepSum = tapply(activitydata01$steps, activitydata01$date, sum))
+	mean(avtivityReport01$StepSum)
+	median(avtivityReport01$StepSum)
+```
+
+Do these values differ from the estimates from the first part of the assignment? 
+What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r,echo=FALSE}
+  ggplot() +
+		labs(title = "Compare the total number of steps taken each day(Missing Valu2)" )  +
+		geom_line(aes(x =unique(activitydata$date),  y =  tapply(activitydata$steps, activitydata$date, sum), label="remove NA" ), colour = 'blue', size = 1) + 
+		geom_line(aes(x = unique(activitydata01$date), y = tapply(activitydata01$steps, activitydata01$date, sum), label= "NA2Median"), colour = 'red', size = 1) 
+```
+Are there differences in activity patterns between weekdays and weekends?
+For this part the weekdays() function may be of some help here. 
+Use the dataset with the filled-in missing values for this part.
+Create a new factor variable in the dataset with two levels ? 
+“weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r}
+  wdaylist <- c("월요일","화요일","수요일","목요일","금요일")
+	wdayindex <- which( weekdays(activitydata01$date) %in% wdaylist == TRUE) 
+	wendindex <- which( weekdays(activitydata01$date) %in% wdaylist == FALSE) 
+  activitydata01 <- cbind(activitydata01, WdayvsWend=as.character("weekday"))
+	activitydata01$WdayvsWend <- as.character(activitydata01$WdayvsWend)
+	activitydata01$WdayvsWend[wendindex] <- as.character("weekend")
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis)
+and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 	
+The plot should look something like the following, which was creating using simulated data:
+
+```{r}
+  activitydataWD <- subset(activitydata01, activitydata01$WdayvsWend == "weekday")
+  activitydataWE <- subset(activitydata01, activitydata01$WdayvsWend == "weekend")
+	PatternOfDayWD<- data.frame(timeOfDay = as.character(unique(activitydataWD$timeOfDay)))
+	PatternOfDayWE<- data.frame(timeOfDay = as.character(unique(activitydataWE$timeOfDay)))
+	PatternOfDayWD<- cbind(PatternOfDayWD, WDMean=  tapply(activitydataWD$steps, activitydataWD$timeOfDay, mean))
+	PatternOfDayWD<- cbind(PatternOfDayWD, WdayWend=as.character("weekday") )
+  PatternOfDayWE<- cbind(PatternOfDayWE, WDMean=  tapply(activitydataWE$steps, activitydataWE$timeOfDay, mean))
+	PatternOfDayWE<- cbind(PatternOfDayWE, WdayWend=as.character("weekend") )	
+	PatternOfDayWW <- merge (PatternOfDayWD, PatternOfDayWE, all = TRUE)
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval
+
+```{r,echo=FALSE}
+  qplot(strptime(timeOfDay,"%H%M") ,WDMean, data=PatternOfDayWW, facets=WdayWend~. ,geom="line" , color = 'blue', main="average number of steps for weekday days or weekend days" , xlab="5-minute interval per a day" , ylab="average number of steps")
+```
