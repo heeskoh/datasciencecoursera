@@ -1,0 +1,126 @@
+---
+title: "Class06-PartII"
+author: "Maria Koh"
+date: "Saturday, September 20, 2014"
+output:
+  pdf_document:
+    fig_crop: no
+    fig_height: 3
+    keep_tex: yes
+---
+This is the project Part 2 for the statistical inference class. 
+1.Load the ToothGrowth data and perform some basic exploratory data analyses 
+```{r}
+ library(knitr)
+ library(ggplot2)
+ library(plyr)
+ data(ToothGrowth)
+```
+perform some basic exploratory data analyses using means for length by supp and dose
+```{r}
+ToothGrowth.OJ <- subset(ToothGrowth, ToothGrowth$supp == "OJ")
+ToothGrowth.VC <- subset(ToothGrowth, ToothGrowth$supp == "VC")  
+
+res.OJ <- data.frame( res.dose=unique(ToothGrowth.OJ$dose), res.mean=tapply(ToothGrowth.OJ$len, ToothGrowth.OJ$dose, mean) , res.supp="OJ")
+res.VC <- data.frame( res.dose=unique(ToothGrowth.VC$dose), res.mean=tapply(ToothGrowth.VC$len, ToothGrowth.VC$dose, mean) , res.supp="VC")
+res <- merge( res.OJ , res.VC, all = TRUE)
+```
+I embed plots for  ToothGrowth.
+```{r}
+ggplot( data=res) +
+geom_bar(aes(x=as.numeric(res$res.dose), y=res$res.mean, fill=res$res.supp), stat="identity", position="dodge") +
+labs(fill="supp") + ggtitle("ToothGrowth by supp") + ylab("Mean by supp") + xlab("dose")
+```
+2.Provide a basic summary of the data.
+```{r}
+summary( ToothGrowth)
+
+ToothGrowth$dose = factor(ToothGrowth$dose, levels=c( 0.5, 1.0, 2.0), labels = c("low", "med", "high"))
+boxplot(len ~supp*dose, data=ToothGrowth, ylab="Tooth Length", main = "boxplots")
+```
+3.Use confidence intervals and hypothesis tests to compare tooth growth by supp and dose.(Use the techniques from class even if there's other approaches worth considering)
+
+3-1) Compare Orange Juice vs. Ascorbic Acid ignored dose type. 
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"],ToothGrowth$len[ToothGrowth$supp=="VC"])
+```
+  H0 - There aren't significant differences in the impact of the Orange Juice and Ascorbic  Acid.So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(0.06063) is larger than the 0.05, Ho accepted, There aren't the significant differences in the impact of the Orange Juice and Ascorbic Acid
+
+3-2) Compare Orange Juice vs. Ascorbic Acid for only low(0.5mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="low"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="low"])
+```
+  H0 - There aren't significant differences in the impact of the Orange Juice and Ascorbic Acid for low(0.5 mg)  dose.So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(0.006359) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the Orange Juice and Ascorbic Acid for low dose.
+
+3-3) Compare Orange Juice vs. Ascorbic Acid for only med(1mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="med"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="med"])
+```
+  H0 - There aren't significant differences in the impact of the Orange Juice and Ascorbic Acid for medium(1 mg) dose.So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(0.001038) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the Orange Juice and Ascorbic Acid for low dose.
+
+3-4) Compare Orange Juice vs. Ascorbic Acid for only high(2mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="high"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="high"])
+```
+  H0 - There aren't significant differences in the impact of the Orange Juice and Ascorbic Acid for High(2 mg) dose.So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(0.9639) is larger than the 0.05, Ho accepted, There aren't the significant differences in the impact of the Orange Juice and Ascorbic Acid for high dose.
+
+3-5) For Orange Juice, Compare low(0.5mg) dose type vs. med(1mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="low"],ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="med"])
+```
+  H0 - There aren't significant differences in the impact for the Low(0.5mg) dose and Medium(1 mg) dose in the Orange Juice. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(8.785e-05) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+3-6) For Orange Juice, Compare low(0.5mg) dose type vs. high(2mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="low"],ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="high"])
+```
+  H0 - There aren't significant differences in the impact for the Low(0.5mg) dose and Medium(1 mg) dose in the Orange Juice. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(1.324e-06) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+3-7) For Orange Juice, Compare med(1mg) dose type vs. high(2mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="med"],ToothGrowth$len[ToothGrowth$supp=="OJ"&ToothGrowth$dose=="high"])
+```
+  H0 - There aren't significant differences in the impact for the Low(0.5mg) dose and Medium(1 mg) dose in the Orange Juice. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(0.0392) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+3-8) For Ascorbic Acid, Compare low(0.5mg) dose type vs. med(1mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="low"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="med"])
+```
+  H0 - There aren't significant differences in the impact for the Low(0.5mg) dose and Medium(1 mg) dose in the Ascorbic Acid. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(6.811e-07) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+3-9) For Ascorbic Acid, Compare low(0.5mg) dose type vs. high(2mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="low"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="high"])
+```
+  H0 - There aren't significant differences in the impact for the Low(0.5mg) dose and high(2 mg) dose in the Ascorbic Acid. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(4.682e-08) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+3-10) For Ascorbic Acid, Compare med(1mg) dose type vs. high(2mg) dose type.
+```{r}
+t.test(ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="med"],ToothGrowth$len[ToothGrowth$supp=="VC"&ToothGrowth$dose=="high"])
+```
+  H0 - There aren't significant differences in the impact for the Medium(1mg) dose and High(2 mg) dose in the Ascorbic Acid. So, The differences of  two group's means are 0. 
+  As the result the t test, 
+  p-value(9.156e-05) is less than the 0.05, Ho rejected, There are the significant differences in the impact of the dose.
+
+4.State your conclusions and the assumptions needed for your conclusions.
+
+There aren't the significant differences in the impact of the Orange Juice and Ascorbic Acid
+But, There are the significant differences in the impact for their dose.
